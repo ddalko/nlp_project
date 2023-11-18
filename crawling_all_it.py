@@ -19,6 +19,7 @@ def get_args_parser():
     parser.add_argument("--start_page", required=True, type=int)
     parser.add_argument("--end_page", required=True, type=int)
     parser.add_argument("--output_dir", required=True, type=str)
+    parser.add_argument("--maximum_review", required=True, type=str, help="최대 리뷰 개수 제한, 설정 값 보다 리뷰 수가 적다면 변함 없음.")
     return parser
 
 # step3.크롬드라이버 실행 및 잡플래닛 로그인 함수
@@ -68,7 +69,7 @@ def  parse_star_rating(style_attribute) -> float:
 
 
 # step6.데이터 크롤링 함수 (직무/근속여부/일시/요약/평점/장점/단점/경영진에게 바라는 점)
-def  scrape_data(driver):
+def  scrape_data(driver, maximum_review):
     list_div  =  []
     list_cur  =  []
     list_stars  =  []
@@ -84,7 +85,7 @@ def  scrape_data(driver):
     # 크롤링 할 페이지수 파악
     page  =  math.ceil(int(review_count.replace(',',''))/5)
 
-    for  _  in  range(page):
+    for  _  in  range(min(page, maximum_review)):
         review_box  =  driver.find_elements(By.CLASS_NAME,  "content_wrap")
         # 페이지당 최대 5개의 리뷰 박스 존재
         division = None
@@ -198,7 +199,7 @@ def  main(args):
             # 리뷰 페이지로 이동
             go_to_review_page(driver,  query)
             # 리뷰 클롤링
-            total_data  =  scrape_data(driver)
+            total_data  =  scrape_data(driver, args.maximum_review)
             # 엑셀 파일로 저장
             excel_path = os.path.join(args.output_dir, f"review_{query}.xlsx")
             total_data.to_excel(excel_path, index=True)
